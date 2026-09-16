@@ -1,44 +1,14 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import type { NextConfig } from "next";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-
-  const code = searchParams.get("code");
-
-  let next = searchParams.get("next") ?? "/";
-
-  if (!next.startsWith("/")) {
-    next = "/";
-  }
-
-  if (code) {
-    const supabase = await createClient();
-
-    const { error } =
-      await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      const forwardedHost = request.headers.get("x-forwarded-host");
-
-      const isLocalEnv =
-        process.env.NODE_ENV === "development";
-
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**"
       }
-
-      if (forwardedHost) {
-        return NextResponse.redirect(
-          `https://${forwardedHost}${next}`
-        );
-      }
-
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+    ]
   }
+};
 
-  return NextResponse.redirect(
-    `${origin}/login?error=auth`
-  );
-}
+export default nextConfig;
